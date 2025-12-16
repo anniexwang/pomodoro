@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withTiming
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withRepeat,
+    withTiming
 } from 'react-native-reanimated';
 
 import { getThemeConfig } from '@/services/theme-utils';
@@ -16,7 +16,7 @@ import { BackgroundElement, TimerPhase, TimerTheme } from '@/types/timer';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface BackgroundElementsProps {
-  theme: TimerTheme | string;
+  theme: TimerTheme;
   phase: TimerPhase;
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -8,13 +8,8 @@ import Animated, {
   withTiming
 } from 'react-native-reanimated';
 
-import { APIKeyConfigModal } from '@/components/api-key-config';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getAIThemeGenerator } from '@/services/ai-theme-generator';
-import { hasAPIKey } from '@/services/api-key-storage';
-import { getGeneratedThemeStorage } from '@/services/generated-theme-storage';
-import { GeneratedTheme } from '@/services/theme-processor';
 import { applyThemeWithValidation } from '@/services/theme-utils';
 import { THEME_CONFIGS, ThemeConfig, TimerTheme } from '@/types/timer';
 
@@ -23,20 +18,18 @@ import { THEME_CONFIGS, ThemeConfig, TimerTheme } from '@/types/timer';
 interface ThemePickerProps {
   visible: boolean;
   onClose: () => void;
-  currentTheme: TimerTheme | string;
-  onThemeSelect: (theme: TimerTheme | string) => void;
+  currentTheme: TimerTheme;
+  onThemeSelect: (theme: TimerTheme) => void;
 }
 
 interface ThemePreviewProps {
-  theme: TimerTheme | string;
+  theme: TimerTheme;
   config: ThemeConfig;
   isSelected: boolean;
   onSelect: () => void;
-  onDelete?: () => void;
-  isGenerated?: boolean;
 }
 
-const ThemePreview: React.FC<ThemePreviewProps> = ({ theme, config, isSelected, onSelect, onDelete, isGenerated = false }) => {
+const ThemePreview: React.FC<ThemePreviewProps> = ({ config, isSelected, onSelect }) => {
   const scaleValue = useSharedValue(1);
   const selectionValue = useSharedValue(isSelected ? 1 : 0);
 
@@ -84,23 +77,11 @@ const ThemePreview: React.FC<ThemePreviewProps> = ({ theme, config, isSelected, 
     scaleValue.value = withTiming(1, { duration: 150 });
   };
 
-  const handleLongPress = () => {
-    if (isGenerated && onDelete) {
-      Alert.alert(
-        'Delete Theme',
-        `Are you sure you want to delete "${config.name}"?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: onDelete },
-        ]
-      );
-    }
-  };
+
 
   return (
     <Pressable
       onPress={onSelect}
-      onLongPress={handleLongPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={styles.themePreviewContainer}
@@ -119,9 +100,6 @@ const ThemePreview: React.FC<ThemePreviewProps> = ({ theme, config, isSelected, 
           <ThemedText style={styles.themeName}>
             {config.name}
           </ThemedText>
-          {isGenerated && (
-            <ThemedText style={styles.generatedLabel}>AI</ThemedText>
-          )}
         </View>
         
         {/* Color bars showing study/break phases */}
@@ -153,42 +131,8 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({
   currentTheme,
   onThemeSelect,
 }) => {
-  const [generatedThemes, setGeneratedThemes] = useState<GeneratedTheme[]>([]);
-  const [promptText, setPromptText] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [promptError, setPromptError] = useState('');
-  const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
-  const [hasConfiguredAPIKey, setHasConfiguredAPIKey] = useState(false);
 
-  // Load generated themes and API key status when modal opens
-  useEffect(() => {
-    if (visible) {
-      loadGeneratedThemes();
-      checkAPIKeyStatus();
-    }
-  }, [visible]);
-
-  const loadGeneratedThemes = async () => {
-    try {
-      const storage = getGeneratedThemeStorage();
-      const themes = await storage.loadThemes();
-      setGeneratedThemes(themes);
-    } catch (error) {
-      console.error('Failed to load generated themes:', error);
-    }
-  };
-
-  const checkAPIKeyStatus = async () => {
-    try {
-      const hasKey = await hasAPIKey();
-      setHasConfiguredAPIKey(hasKey);
-    } catch (error) {
-      console.error('Failed to check API key status:', error);
-      setHasConfiguredAPIKey(false);
-    }
-  };
-
-  const handleThemeSelect = async (theme: TimerTheme | string) => {
+  const handleThemeSelect = async (theme: TimerTheme) => {
     try {
       // Apply theme with validation
       const success = await applyThemeWithValidation(theme, onThemeSelect);
@@ -211,82 +155,7 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({
     }
   };
 
-  const handleGenerateTheme = async () => {
-    if (!promptText.trim()) {
-      setPromptError('Please enter a theme description');
-      return;
-    }
 
-    if (promptText.trim().length > 50) {
-      setPromptError('Theme description must be 50 characters or less');
-      return;
-    }
-
-    // Check if API key is configured
-    if (!hasConfiguredAPIKey) {
-      Alert.alert(
-        'API Key Required',
-        'You need to configure your OpenAI API key to generate themes. Would you like to add it now?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Add API Key', onPress: () => setShowAPIKeyConfig(true) },
-        ]
-      );
-      return;
-    }
-
-    setPromptError('');
-    setIsGenerating(true);
-
-    try {
-      // Use the AI theme generator with stored API key
-      const generator = getAIThemeGenerator();
-      const result = await generator.generateTheme(promptText.trim());
-
-      if (result.success && result.theme) {
-        // Save the theme
-        const storage = getGeneratedThemeStorage();
-        await storage.saveTheme(result.theme);
-
-        // Reload themes and clear input
-        await loadGeneratedThemes();
-        setPromptText('');
-        
-        if (result.usedFallback) {
-          Alert.alert(
-            'Theme Generated',
-            `Theme "${result.theme.name}" has been generated using fallback colors due to AI service issues.`
-          );
-        } else {
-          Alert.alert('Success', `Theme "${result.theme.name}" has been generated!`);
-        }
-      } else {
-        Alert.alert(
-          'Generation Failed',
-          result.error || 'Failed to generate theme. Please try again.'
-        );
-      }
-    } catch (error) {
-      console.error('Theme generation failed:', error);
-      Alert.alert(
-        'Generation Failed',
-        error instanceof Error ? error.message : 'Failed to generate theme. Please try again.'
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleDeleteTheme = async (themeId: string) => {
-    try {
-      const storage = getGeneratedThemeStorage();
-      await storage.deleteTheme(themeId);
-      await loadGeneratedThemes();
-    } catch (error) {
-      console.error('Failed to delete theme:', error);
-      Alert.alert('Error', 'Failed to delete theme. Please try again.');
-    }
-  };
 
   return (
     <Modal
@@ -299,83 +168,12 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({
         <View style={styles.header}>
           <ThemedText style={styles.title}>Choose Theme</ThemedText>
           <View style={styles.headerButtons}>
-            {/* <Pressable 
-              onPress={() => setShowAPIKeyConfig(true)} 
-              style={[styles.apiKeyButton, !hasConfiguredAPIKey && styles.apiKeyButtonWarning]}
-            >
-              <ThemedText style={[
-                styles.apiKeyButtonText,
-                !hasConfiguredAPIKey && styles.apiKeyButtonTextWarning
-              ]}>
-                {hasConfiguredAPIKey ? '🔑' : '⚠️'}
-              </ThemedText>
-            </Pressable> */}
             <Pressable onPress={onClose} style={styles.closeButton}>
               <ThemedText style={styles.closeButtonText}>Done</ThemedText>
             </Pressable>
           </View>
         </View>
-        
-        {/* AI Theme Generation Section */}
-        {/* <View style={styles.generationSection}>
-          <View style={styles.generationHeader}>
-            <ThemedText style={styles.sectionTitle}>Generate Custom Theme</ThemedText>
-            {!hasConfiguredAPIKey && (
-              <Pressable 
-                onPress={() => setShowAPIKeyConfig(true)}
-                style={styles.configureKeyButton}
-              >
-                <ThemedText style={styles.configureKeyText}>Configure API Key</ThemedText>
-              </Pressable>
-            )}
-          </View>
-          
-          {hasConfiguredAPIKey ? (
-            <>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.promptInput}
-                  placeholder="Describe your theme (e.g., ocean, sunset, forest)"
-                  placeholderTextColor="#999"
-                  value={promptText}
-                  onChangeText={(text) => {
-                    setPromptText(text);
-                    if (promptError) setPromptError('');
-                  }}
-                  maxLength={50}
-                  editable={!isGenerating}
-                />
-                <Pressable
-                  style={[styles.generateButton, isGenerating && styles.generateButtonDisabled]}
-                  onPress={handleGenerateTheme}
-                  disabled={isGenerating}
-                >
-                  <ThemedText style={styles.generateButtonText}>
-                    {isGenerating ? 'Generating...' : 'Generate'}
-                  </ThemedText>
-                </Pressable>
-              </View>
-              {promptError ? (
-                <ThemedText style={styles.errorText}>{promptError}</ThemedText>
-              ) : null}
-              <ThemedText style={styles.characterCount}>
-                {promptText.length}/50 characters
-              </ThemedText>
-            </>
-          ) : (
-            <View style={styles.noApiKeyContainer}>
-              <ThemedText style={styles.noApiKeyText}>
-                Configure your OpenAI API key to generate custom themes
-              </ThemedText>
-              <Pressable 
-                onPress={() => setShowAPIKeyConfig(true)}
-                style={styles.setupButton}
-              >
-                <ThemedText style={styles.setupButtonText}>Set Up API Key</ThemedText>
-              </Pressable>
-            </View>
-          )}
-        </View> */}
+
         
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
@@ -390,43 +188,13 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({
               config={config}
               isSelected={currentTheme === themeKey}
               onSelect={() => handleThemeSelect(themeKey as TimerTheme)}
-              isGenerated={false}
             />
           ))}
 
-          {/* Generated Themes */}
-          {generatedThemes.length > 0 && (
-            <>
-              <ThemedText style={[styles.sectionTitle, styles.generatedSectionTitle]}>
-                Your Generated Themes
-              </ThemedText>
-              {generatedThemes.map((theme) => (
-                <ThemePreview
-                  key={theme.id}
-                  theme={theme.id}
-                  config={theme}
-                  isSelected={currentTheme === theme.id}
-                  onSelect={() => handleThemeSelect(theme.id)}
-                  onDelete={() => handleDeleteTheme(theme.id)}
-                  isGenerated={true}
-                />
-              ))}
-            </>
-          )}
+
         </ScrollView>
 
-        {/* API Key Configuration Modal */}
-        <APIKeyConfigModal
-          visible={showAPIKeyConfig}
-          onClose={() => setShowAPIKeyConfig(false)}
-          onKeyConfigured={(hasKey) => {
-            setHasConfiguredAPIKey(hasKey);
-            if (hasKey) {
-              // Refresh the AI theme generator instance
-              getAIThemeGenerator();
-            }
-          }}
-        />
+
       </ThemedView>
     </Modal>
   );
@@ -463,26 +231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  apiKeyButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#DDD',
-  },
-  apiKeyButtonWarning: {
-    backgroundColor: '#FFF3CD',
-    borderColor: '#FFEAA7',
-  },
-  apiKeyButtonText: {
-    fontSize: 18,
-  },
-  apiKeyButtonTextWarning: {
-    fontSize: 16,
-  },
+
   title: {
     fontSize: 28,
     fontWeight: '800',
@@ -611,57 +360,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  generationSection: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: '#F8F9FA',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
-  },
-  generationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  configureKeyButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#FF9500',
-    borderRadius: 8,
-  },
-  configureKeyText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  noApiKeyContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  noApiKeyText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 22,
-  },
-  setupButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  setupButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
@@ -669,63 +368,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 16,
   },
-  generatedSectionTitle: {
-    marginTop: 24,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-  },
-  promptInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: '#FFFFFF',
-    color: '#333',
-    minHeight: 48,
-  },
-  generateButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minHeight: 48,
-    justifyContent: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  generateButtonDisabled: {
-    backgroundColor: '#CCC',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  generateButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 14,
-    marginTop: 8,
-  },
-  characterCount: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-    textAlign: 'right',
-  },
+
   themeNameContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -733,15 +376,5 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  generatedLabel: {
-    backgroundColor: '#4CAF50',
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+
 });

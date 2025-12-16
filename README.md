@@ -1,6 +1,6 @@
 # Pomodoro Timer App 🍅
 
-A beautiful, customizable Pomodoro timer built with React Native and Expo. Features AI-powered theme generation, background persistence, and a clean, intuitive interface to help you stay focused and productive.
+A beautiful, customizable Pomodoro timer built with React Native and Expo. Features background persistence, customizable themes, and a clean, intuitive interface to help you stay focused and productive.
 
 ## Features
 
@@ -12,10 +12,9 @@ A beautiful, customizable Pomodoro timer built with React Native and Expo. Featu
 - **Progress Tracking**: Visual circular progress indicator and completed Pomodoro counter
 
 ### 🎨 Theming & Personalization
-- **AI Theme Generation**: Enter any word or phrase to generate custom themes with matching colors and visual elements
 - **Predefined Themes**: Choose from curated themes including Default, Snow, Christmas, and Pokemon
 - **Dynamic Backgrounds**: Animated background elements that change based on your current phase (study/break)
-- **Theme Persistence**: Your custom and selected themes are saved across app sessions
+- **Theme Persistence**: Your selected themes are saved across app sessions
 - **Accessibility**: All themes maintain proper contrast ratios for readability
 
 ### 📱 Cross-Platform Support
@@ -88,19 +87,12 @@ npm run reset-project  # Reset to clean project state
 ## Key Components
 
 - **Timer Screen**: Main Pomodoro timer interface with controls
-- **Theme Picker**: Modal for selecting and generating custom themes
+- **Theme Picker**: Modal for selecting predefined themes
 - **Duration Settings**: Configurable study and break period durations
 - **Background Elements**: Animated visual elements that respond to timer state
 - **Circular Progress**: Custom progress ring component
 
-## AI Theme Generation
 
-The app includes an innovative AI-powered theme generation system:
-
-1. Enter any descriptive word or phrase (e.g., "ocean", "cyberpunk", "cozy coffee shop")
-2. The AI generates appropriate colors, gradients, and visual elements
-3. Themes are automatically optimized for both study and break phases
-4. Generated themes are saved and can be managed like predefined themes
 
 ## Development
 
@@ -140,4 +132,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Built with [Expo](https://expo.dev) and [React Native](https://reactnative.dev)
 - Inspired by the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique) by Francesco Cirillo
-- AI theme generation powered by modern language models

@@ -3,9 +3,9 @@ import { CircularProgress } from '@/components/circular-progress';
 import { DurationSettings } from '@/components/duration-settings';
 import { ThemePicker } from '@/components/theme-picker';
 import { useBackgroundTimer } from '@/hooks/use-background-timer';
-import { useEnhancedTheme } from '@/hooks/use-enhanced-theme';
+import { useTheme } from '@/hooks/use-theme';
 import { durationSettingsService } from '@/services/duration-settings-service';
-import { createInitialTimerState, formatTime, getPhaseDisplayName, TimerConfig, TimerPhase, TimerState } from '@/types/timer';
+import { createInitialTimerState, formatTime, getPhaseDisplayName, TimerConfig, TimerPhase, TimerState, TimerTheme } from '@/types/timer';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -21,7 +21,7 @@ export default function TimerScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Theme integration
-  const { currentTheme, themeConfig, setTheme, isLoading } = useEnhancedTheme();
+  const { currentTheme, themeConfig, setTheme, isLoading } = useTheme();
 
   // Initialize duration settings and timer state
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function TimerScreen() {
     setShowThemePicker(true);
   };
 
-  const handleThemeSelect = async (theme: any) => {
+  const handleThemeSelect = async (theme: TimerTheme) => {
     try {
       await setTheme(theme);
       setShowThemePicker(false);

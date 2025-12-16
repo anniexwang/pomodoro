@@ -4,15 +4,13 @@
 
 import { DEFAULT_THEME, THEME_CONFIGS, ThemeConfig, TimerTheme } from '@/types/timer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getGeneratedThemeStorage } from './generated-theme-storage';
-import { GeneratedTheme } from './theme-processor';
 
 const THEME_STORAGE_KEY = '@pomodoro_timer_theme';
 
 /**
  * Theme persistence utilities
  */
-export const saveTheme = async (theme: TimerTheme | string): Promise<void> => {
+export const saveTheme = async (theme: TimerTheme): Promise<void> => {
   try {
     await AsyncStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch (error) {
@@ -20,18 +18,11 @@ export const saveTheme = async (theme: TimerTheme | string): Promise<void> => {
   }
 };
 
-export const loadTheme = async (): Promise<TimerTheme | string> => {
+export const loadTheme = async (): Promise<TimerTheme> => {
   try {
     const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-    if (savedTheme) {
-      // Check if it's a predefined theme
-      if (Object.values(TimerTheme).includes(savedTheme as TimerTheme)) {
-        return savedTheme as TimerTheme;
-      }
-      // Check if it's a generated theme (starts with 'ai-theme-')
-      if (savedTheme.startsWith('ai-theme-')) {
-        return savedTheme;
-      }
+    if (savedTheme && Object.values(TimerTheme).includes(savedTheme as TimerTheme)) {
+      return savedTheme as TimerTheme;
     }
   } catch (error) {
     console.warn('Failed to load theme preference:', error);
@@ -40,29 +31,10 @@ export const loadTheme = async (): Promise<TimerTheme | string> => {
 };
 
 /**
- * Helper function to get theme config for any theme (predefined or generated)
+ * Helper function to get theme config for predefined themes
  */
-export const getThemeConfig = async (theme: TimerTheme | string): Promise<ThemeConfig | null> => {
-  try {
-    // Check if it's a predefined theme
-    if (Object.values(TimerTheme).includes(theme as TimerTheme)) {
-      return THEME_CONFIGS[theme as TimerTheme];
-    }
-    
-    // Check if it's a generated theme
-    if (typeof theme === 'string' && theme.startsWith('ai-theme-')) {
-      const storage = getGeneratedThemeStorage();
-      const generatedTheme = await storage.getThemeById(theme);
-      return generatedTheme;
-    }
-    
-    // Unknown theme type
-    console.warn(`Unknown theme type: ${theme}`);
-    return null;
-  } catch (error) {
-    console.warn('Failed to load theme config:', error);
-    return null;
-  }
+export const getThemeConfig = (theme: TimerTheme): ThemeConfig => {
+  return THEME_CONFIGS[theme];
 };
 
 /**
@@ -92,29 +64,20 @@ export const validateThemeConfig = (config: ThemeConfig): boolean => {
 };
 
 /**
- * Enhanced theme application with accessibility validation
+ * Theme application with validation
  */
 export const applyThemeWithValidation = async (
-  theme: TimerTheme | string,
-  onThemeSelect: (theme: TimerTheme | string) => void
+  theme: TimerTheme,
+  onThemeSelect: (theme: TimerTheme) => void
 ): Promise<boolean> => {
   try {
     // Get theme configuration
-    const config = await getThemeConfig(theme);
-    if (!config) {
-      console.warn(`Theme configuration not found for: ${theme}`);
-      return false;
-    }
+    const config = getThemeConfig(theme);
     
     // Validate theme structure
     if (!validateThemeConfig(config)) {
       console.warn(`Invalid theme configuration for: ${theme}`);
       return false;
-    }
-    
-    // Validate accessibility for generated themes
-    if (typeof theme === 'string' && theme.startsWith('ai-theme-')) {
-      validateAccessibility(config as GeneratedTheme);
     }
     
     // Apply theme
@@ -129,7 +92,7 @@ export const applyThemeWithValidation = async (
 /**
  * Validates accessibility compliance for themes
  */
-export const validateAccessibility = (theme: GeneratedTheme): void => {
+export const validateAccessibility = (theme: ThemeConfig): void => {
   try {
     // Validate study colors
     const studyContrast = calculateContrastRatio(
