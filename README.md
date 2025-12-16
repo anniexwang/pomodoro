@@ -1,50 +1,143 @@
-# Welcome to your Expo app 👋
+# Pomodoro Timer App 🍅
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A beautiful, customizable Pomodoro timer built with React Native and Expo. Features AI-powered theme generation, background persistence, and a clean, intuitive interface to help you stay focused and productive.
 
-## Get started
+## Features
 
-1. Install dependencies
+### 🎯 Core Timer Functionality
+- **Automatic Cycling**: Seamlessly transitions between study sessions (default 25 min) and breaks (default 5 min)
+- **Background Persistence**: Timer continues running when you navigate away or minimize the app
+- **Flexible Controls**: Start, pause, resume, and reset functionality
+- **Custom Durations**: Adjust study and break periods to match your productivity style (1-60 min study, 1-30 min breaks)
+- **Progress Tracking**: Visual circular progress indicator and completed Pomodoro counter
 
+### 🎨 Theming & Personalization
+- **AI Theme Generation**: Enter any word or phrase to generate custom themes with matching colors and visual elements
+- **Predefined Themes**: Choose from curated themes including Default, Snow, Christmas, and Pokemon
+- **Dynamic Backgrounds**: Animated background elements that change based on your current phase (study/break)
+- **Theme Persistence**: Your custom and selected themes are saved across app sessions
+- **Accessibility**: All themes maintain proper contrast ratios for readability
+
+### 📱 Cross-Platform Support
+- **iOS**: Native iOS experience with tablet support
+- **Android**: Adaptive icons and edge-to-edge display
+- **Web**: Progressive web app with static output
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v16 or later)
+- npm or yarn
+- Expo CLI (optional, but recommended)
+
+### Installation
+
+1. Clone the repository and install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. Start the development server:
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+3. Open the app on your preferred platform:
+   - **iOS Simulator**: Press `i` in the terminal or run `npm run ios`
+   - **Android Emulator**: Press `a` in the terminal or run `npm run android`
+   - **Web Browser**: Press `w` in the terminal or run `npm run web`
+   - **Physical Device**: Scan the QR code with Expo Go app
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Available Scripts
 
 ```bash
-npm run reset-project
+npm start          # Start Expo development server
+npm run ios        # Start on iOS simulator
+npm run android    # Start on Android emulator
+npm run web        # Start web development server
+npm run lint       # Run ESLint checks
+npm test           # Run Jest tests
+npm run reset-project  # Reset to clean project state
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Technology Stack
 
-## Learn more
+- **Framework**: React Native 0.81.5 with React 19.1.0
+- **Platform**: Expo ~54.0.27 with Expo Router ~6.0.17
+- **Language**: TypeScript ~5.9.2 with strict mode
+- **Navigation**: File-based routing with Expo Router
+- **Animations**: React Native Reanimated ~4.1.1
+- **Storage**: AsyncStorage for settings and theme persistence
+- **Testing**: Jest with TypeScript support
 
-To learn more about developing your project with Expo, look at the following resources:
+## Project Structure
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+├── app/                    # File-based routing screens
+├── components/            # Reusable UI components
+│   ├── ui/               # Low-level UI primitives
+│   └── __tests__/        # Component tests
+├── hooks/                # Custom React hooks
+├── services/             # Business logic and API services
+│   └── __tests__/        # Service tests
+├── types/                # TypeScript type definitions
+├── constants/            # App-wide constants and themes
+└── assets/               # Images, icons, and static assets
+```
 
-## Join the community
+## Key Components
 
-Join our community of developers creating universal apps.
+- **Timer Screen**: Main Pomodoro timer interface with controls
+- **Theme Picker**: Modal for selecting and generating custom themes
+- **Duration Settings**: Configurable study and break period durations
+- **Background Elements**: Animated visual elements that respond to timer state
+- **Circular Progress**: Custom progress ring component
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## AI Theme Generation
+
+The app includes an innovative AI-powered theme generation system:
+
+1. Enter any descriptive word or phrase (e.g., "ocean", "cyberpunk", "cozy coffee shop")
+2. The AI generates appropriate colors, gradients, and visual elements
+3. Themes are automatically optimized for both study and break phases
+4. Generated themes are saved and can be managed like predefined themes
+
+## Development
+
+### Running Tests
+```bash
+npm test                    # Run all tests
+npm test -- --watch       # Run tests in watch mode
+npm test -- --coverage    # Run tests with coverage report
+```
+
+### Code Quality
+```bash
+npm run lint               # Check for linting errors
+npm run lint -- --fix     # Auto-fix linting issues
+```
+
+### Building for Production
+```bash
+npx expo build:ios        # Build for iOS App Store
+npx expo build:android    # Build for Google Play Store
+npx expo export            # Export for web deployment
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [Expo](https://expo.dev) and [React Native](https://reactnative.dev)
+- Inspired by the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique) by Francesco Cirillo
+- AI theme generation powered by modern language models
